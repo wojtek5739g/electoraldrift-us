@@ -1,0 +1,85 @@
+"""US Census ACS 5-year estimates - county socio-economic features.
+
+API:    https://api.census.gov/data/{year}/acs/acs5  (free API key REQUIRED, env var CENSUS_API_KEY;
+        sign up at https://api.census.gov/data/key_signup.html)
+Years:  2012, 2016, 2020, 2024 by default (presidential election years). The education table
+        B15003 starts in 2012, so the 2012 vintage is also used for the 2000-2008 elections
+        (approximation: county structure changes slowly).
+Output: data/bronze/census_acs/acs5_<year>.json (raw response)
+        data/bronze/census_acs/acs5_<year>.csv  (same table with header + county_fips)
+Quality note: the API uses sentinel values such as -666666666 for "not available";
+        they must be replaced with NULL in the Silver layer.
+"""
+from __future__ import annotations
+
+import argparse
+import os
+
+import pandas as pd
+
+from common import BRONZE, get_json, get_logger, make_session, save_json, write_manifest
+
+SOURCE = "census_acs"
+log = get_logger(SOURCE)
+
+VARIABLES = {
+    "B01003_001E": "total_pop",
+    "B01002_001E": "median_age",
+    "B19013_001E": "median_hh_income",
+    "B15003_001E": "edu_pop_25plus",
+    "B15003_022E": "edu_bachelors",
+    "B15003_023E": "edu_masters",
+    "B15003_024E": "edu_professional",
+    "B15003_025E": "edu_doctorate",
+    "B08301_001E": "commuters_total",
+    "B08301_010E": "commuters_public_transit",
+    "B23025_003E": "civilian_labor_force",
+    "B23025_005E": "unemployed",
+}
+
+
+def fetch_year(year: int, session) -> pd.DataFrame | None:
+    url = f"https://api.census.gov/data/{year}/acs/acs5"
+    params = {"get": "NAME," + ",".join(VARIABLES), "for": "county:*", "in": "state:*",
+              "key": os.environ["CENSUS_API_KEY"]}
+    try:
+        rows = get_json(url, SOURCE, session, params=params)
+    except Exception as e:  # e.g. 404 when the year is not published yet
+        log.warning("Year %s not available: %s", year, e)
+        write_manifest(SOURCE, url, None, "failed", year=year)
+        return None
+    raw_path = save_json(rows, BRONZE / SOURCE / f"acs5_{year}.json")
+    write_manifest(SOURCE, url, raw_path, "ok", year=year)
+
+    df = pd.DataFrame(rows[1:], columns=rows[0]).rename(columns=VARIABLES)
+    df["county_fips"] = df["state"].str.zfill(2) + df["county"].str.zfill(3)
+    df["acs_year"] = year
+    out = BRONZE / SOURCE / f"acs5_{year}.csv"
+    df.to_csv(out, index=False)
+    log.info("ACS %s: %d counties, columns: %s", year, len(df), list(df.columns))
+    return df
+
+
+def run(years=(2012, 2016, 2020, 2024)) -> list[str]:
+    if not os.environ.get("CENSUS_API_KEY"):
+        log.error("Census API requires a key ('Missing Key' response). Get a free key at "
+                  "https://api.census.gov/data/key_signup.html and set it, in PowerShell: "
+                  '$env:CENSUS_API_KEY="<key>"   (cmd: set CENSUS_API_KEY=<key>)')
+        write_manifest(SOURCE, "https://api.census.gov/data", None, "missing_key")
+        return []
+    s = make_session()
+    done = []
+    for y in years:
+        df = fetch_year(y, s)
+        if df is None:  # fallback: previous year
+            y = y - 1
+            df = fetch_year(y, s)
+        if df is not None:
+            done.append(str(BRONZE / SOURCE / f"acs5_{y}.csv"))
+    return done
+
+
+if __name__ == "__main__":
+    p = argparse.ArgumentParser()
+    p.add_argument("--years", nargs="+", type=int, default=[2012, 2016, 2020, 2024])
+    run(p.parse_args().years)
