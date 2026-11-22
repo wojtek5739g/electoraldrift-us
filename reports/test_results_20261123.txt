@@ -1,45 +1,48 @@
-# Test run 2026-11-22 23:09 UTC
+# Test run 2026-11-22 23:31 UTC
 
 ## python -m unittest discover -s tests -p test_acquisition.py -v
 test_accident_feature_relative_to_baseline (test_acquisition.AcquisitionTests) ... ok
-test_ballots_across_chunks (test_acquisition.AcquisitionTests) ... 2026-11-22 23:09:38,012 | nc_absentee | INFO | Columns (5): ['county_desc', 'voter_party_code', 'ballot_rtn_dt', 'ballot_rtn_status', 'ballot_req_type']
-2026-11-22 23:09:38,016 | nc_absentee | INFO | Read 1 rows
-2026-11-22 23:09:38,021 | nc_absentee | INFO | Read 2 rows
-2026-11-22 23:09:38,025 | nc_absentee | INFO | Read 3 rows
-2026-11-22 23:09:38,029 | nc_absentee | INFO | Read 4 rows
-2026-11-22 23:09:38,039 | nc_absentee | WARNING | Excluded [after_election_day]: 1 aggregate rows (1 ballots), e.g. ['11/06/2024']
-2026-11-22 23:09:38,040 | nc_absentee | INFO | Excluded rows -> <tmp>/nc_rejected_dates_20241105.csv
-2026-11-22 23:09:38,043 | nc_absentee | INFO | NC: 4 ballots in file, aggregate 1 rows (2 accepted ballots in window) -> <tmp>/nc_early_votes_daily_20241105.csv
+test_ballots_across_chunks (test_acquisition.AcquisitionTests) ... 2026-11-22 23:31:42,501 | nc_absentee | INFO | Columns (5): ['county_desc', 'voter_party_code', 'ballot_rtn_dt', 'ballot_rtn_status', 'ballot_req_type']
+2026-11-22 23:31:42,505 | nc_absentee | INFO | Read 1 rows
+2026-11-22 23:31:42,508 | nc_absentee | INFO | Read 2 rows
+2026-11-22 23:31:42,513 | nc_absentee | INFO | Read 3 rows
+2026-11-22 23:31:42,516 | nc_absentee | INFO | Read 4 rows
+2026-11-22 23:31:42,526 | nc_absentee | WARNING | Excluded [after_election_day]: 1 aggregate rows (1 ballots), e.g. ['11/06/2024']
+2026-11-22 23:31:42,528 | nc_absentee | INFO | Excluded rows -> <tmp>/nc_rejected_dates_20241105.csv
+2026-11-22 23:31:42,531 | nc_absentee | INFO | NC: 4 ballots in file, aggregate 1 rows (2 accepted ballots in window) -> <tmp>/nc_early_votes_daily_20241105.csv
 ok
-test_drivenc_daily_counts_each_accident_once (test_acquisition.AcquisitionTests) ... 2026-11-22 23:09:38,049 | drivenc_events | INFO | Event types seen: {'Crash / ': 2, 'Roadwork / ': 1}
-2026-11-22 23:09:38,073 | drivenc_events | INFO | Live accidents: 1 unique (0 without county) in 1 snapshot files -> <tmp>/nc_accidents_daily_live.csv
+test_drivenc_daily_counts_each_accident_once (test_acquisition.AcquisitionTests) ... 2026-11-22 23:31:42,536 | drivenc_events | INFO | Event types seen: {'Crash / ': 2, 'Roadwork / ': 1}
+2026-11-22 23:31:42,557 | drivenc_events | INFO | Live accidents: 1 unique (0 without county) in 1 snapshot files -> <tmp>/nc_accidents_daily_live.csv
 ok
-test_drivenc_record_and_missing_key (test_acquisition.AcquisitionTests) ... 2026-11-22 23:09:38,080 | drivenc_events | ERROR | A developer key is required. Request one on https://www.drivenc.gov and set it, in PowerShell: $env:DRIVENC_API_KEY="<key>"   (cmd: set DRIVENC_API_KEY=<key>)
+test_drivenc_record_and_missing_key (test_acquisition.AcquisitionTests) ... 2026-11-22 23:31:42,566 | drivenc_events | ERROR | A developer key is required. Request one on https://www.drivenc.gov and set it, in PowerShell: $env:DRIVENC_API_KEY="<key>"   (cmd: set DRIVENC_API_KEY=<key>)
 ok
 test_helene_daily_closure_counts (test_acquisition.AcquisitionTests) ... ok
-test_missing_schema_fails_runner (test_acquisition.AcquisitionTests) ... 2026-11-22 23:09:38,101 | nc_absentee | INFO | Columns (2): ['county_desc', 'voter_party_code']
+test_missing_schema_fails_runner (test_acquisition.AcquisitionTests) ... 2026-11-22 23:31:42,587 | nc_absentee | INFO | Columns (2): ['county_desc', 'voter_party_code']
 ok
-test_repeat_download (test_acquisition.AcquisitionTests) ... 2026-11-22 23:09:38,110 | fixture | INFO | Downloaded archive.csv (0.0 MB)
-2026-11-22 23:09:38,111 | fixture | INFO | Already downloaded, skipping: archive.csv
+test_repeat_download (test_acquisition.AcquisitionTests) ... 2026-11-22 23:31:42,596 | fixture | INFO | Downloaded archive.csv (0.0 MB)
+2026-11-22 23:31:42,598 | fixture | INFO | Already downloaded, skipping: archive.csv
 ok
-test_retry_429_then_success (test_acquisition.AcquisitionTests) ... 2026-11-22 23:09:38,115 | fixture | WARNING | HTTP 429, retrying (1/3)
-2026-11-22 23:09:38,116 | fixture | INFO | Downloaded archive.csv (0.0 MB)
+test_retry_429_then_success (test_acquisition.AcquisitionTests) ... 2026-11-22 23:31:42,602 | fixture | WARNING | HTTP 429, retrying (1/3)
+2026-11-22 23:31:42,604 | fixture | INFO | Downloaded archive.csv (0.0 MB)
 ok
-test_us_accidents_zip_filters_nc (test_acquisition.AcquisitionTests) ... 2026-11-22 23:09:38,122 | us_accidents | INFO | Read 3 rows, 2 in North Carolina
+test_us_accidents_zip_filters_nc (test_acquisition.AcquisitionTests) ... 2026-11-22 23:31:42,609 | us_accidents | INFO | Read 3 rows, 2 in North Carolina
 ok
 test_weather_missing_location (test_acquisition.AcquisitionTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 10 tests in 0.133s
+Ran 10 tests in 0.135s
 
 OK
 
 ## python tests/verify_samples.py
+test_accident_windows_grid (__main__.SampleQuality) ... ok
+test_elections_join_weather_and_accidents (__main__.SampleQuality) ... ok
+test_helene_closures (__main__.SampleQuality) ... ok
 test_nc_counts_and_keys (__main__.SampleQuality) ... ok
 test_nws_poll_counts (__main__.SampleQuality) ... ok
 test_weather_covers_ballots (__main__.SampleQuality) ... ok
 
 ----------------------------------------------------------------------
-Ran 3 tests in 0.089s
+Ran 6 tests in 0.303s
 
 OK

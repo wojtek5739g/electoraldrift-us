@@ -87,10 +87,10 @@ With the project environment active, run the ten functional tests without API ke
 python -m unittest discover -s tests -p test_acquisition.py -v
 ```
 
-To rebuild the batch inputs for the three dated sample checks from a clean clone, run the first command below. Skip that first command when the PM2 files are already present. The second command checks the saved NWS snapshot in `tests/fixtures/live_20261121.zip` as well as the local NC and weather outputs. The counts in these checks are pinned to the submitted snapshot. A later upstream revision can legitimately change them.
+To rebuild the batch inputs for the six dated sample checks from a clean clone, run the first command below. Skip that first command when the PM2 files are already present. The second command checks the saved NWS snapshot in `tests/fixtures/live_20261121.zip` as well as the local NC early-vote, weather, accident and Helene outputs (2016, 2020, 2022 and 2024). The counts in these checks are pinned to the submitted snapshot. A later upstream revision can legitimately change them.
 
 ```powershell
-python run_samples.py --only centroids nc_absentee open_meteo
+python run_samples.py --only centroids nc_absentee nc_absentee_2016 nc_absentee_2020 nc_absentee_2022 open_meteo open_meteo_2016 open_meteo_2020 open_meteo_2022 us_accidents helene
 python tests/verify_samples.py
 ```
 

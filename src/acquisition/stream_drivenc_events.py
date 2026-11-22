@@ -31,9 +31,11 @@ SOURCE = "drivenc_events"
 BASE_URL = "https://www.drivenc.gov"
 KEEP = ["ID", "RoadwayName", "DirectionOfTravel", "EventType", "EventSubType", "IsFullClosure",
         "Severity", "County", "Latitude", "Longitude", "StartDate", "PlannedEndDate", "LastUpdated"]
-# event types counted as accidents; the exact DriveNC values are checked in the aggregation log
-ACCIDENT_PATTERN = r"crash|accident|collision|vehicle"
-SEVERE_LEVELS = {"major", "severe", "critical"}
+# Accidents are recognised by the event SUBTYPE (e.g. "accidentsAndIncidents / Crash",
+# "closures / Crash"); the type alone is too broad ("accidentsAndIncidents / Active Truck
+# Restrictions" is not an accident). Checked on a live sample of 673 events, 2026-11-23.
+ACCIDENT_PATTERN = r"crash|collision|vehicle"
+SEVERE_LEVELS = {"major", "severe", "critical", "3", "4"}  # DriveNC mixes words and levels 1-4
 log = get_logger(SOURCE)
 
 
@@ -113,15 +115,18 @@ def aggregate_daily(state: str = "NC") -> str | None:
         log.error("No DriveNC snapshots in %s - run the stream first", BRONZE / SOURCE)
         return None
     ev = pd.DataFrame(rows)
-    kind = ev["EventType"].fillna("") + " / " + ev["EventSubType"].fillna("")
-    log.info("Event types seen: %s", kind.value_counts().head(15).to_dict())
+    log.info("Event types seen: %s",
+             (ev["EventType"].fillna("") + " / " + ev["EventSubType"].fillna("")).value_counts().head(15).to_dict())
+    sub = ev["EventSubType"].fillna("").astype(str)
+    kind = sub.where(sub.str.strip() != "", ev["EventType"].fillna("").astype(str))
     acc = ev[kind.str.contains(ACCIDENT_PATTERN, case=False, regex=True)]
     acc = acc.sort_values("polled_at").drop_duplicates("ID", keep="last")  # one row per accident
     start = pd.to_datetime(acc["StartDate"].fillna(acc["polled_at"]), utc=True, errors="coerce")
     events = pd.DataFrame({
         "county_fips": acc["county_fips"],
         "date": start.dt.tz_convert("America/New_York").dt.strftime("%Y-%m-%d"),
-        "severe": acc["Severity"].fillna("").str.lower().isin(SEVERE_LEVELS) | acc["IsFullClosure"].eq(True),
+        "severe": acc["Severity"].fillna("").astype(str).str.lower().isin(SEVERE_LEVELS)
+        | acc["IsFullClosure"].eq(True),
     })
     lookup = county_lookup(state)
     today = pd.Timestamp.now(tz="America/New_York").strftime("%Y-%m-%d")
