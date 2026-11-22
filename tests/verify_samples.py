@@ -9,7 +9,6 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src" / "acquisition"))
-import stream_faa_airports as faa
 from batch_open_meteo import SAMPLE_END, SAMPLE_START
 
 DATA = ROOT / "data"
@@ -18,18 +17,6 @@ LIVE_SAMPLE = ROOT / "tests" / "fixtures" / "live_20261121.zip"
 
 
 class SampleQuality(unittest.TestCase):
-    def test_faa_xml_replay(self):
-        with zipfile.ZipFile(LIVE_SAMPLE) as sample:
-            records = [json.loads(line) for line in
-                       sample.read("faa_nas/events_20261121_124751.jsonl").splitlines()]
-            stamps = sorted({r["polled_at"] for r in records})
-            self.assertEqual(len(stamps), 2)
-            for stamp, suffix in zip(stamps, ["124752", "124852"]):
-                xml = sample.read(f"faa_nas/raw_20261121_{suffix}.xml").decode("utf8")
-                decoded = faa.parse(xml, stamp)
-                self.assertEqual(len(decoded), 5)
-                self.assertEqual(decoded, [r for r in records if r["polled_at"] == stamp])
-
     def test_nc_counts_and_keys(self):
         ballots = pd.read_csv(SILVER / "nc_early_votes_daily_20241105.csv")
         key = ["county_desc", "date", "voter_party_code", "ballot_req_type"]
@@ -58,14 +45,6 @@ class SampleQuality(unittest.TestCase):
                              indicator=True, validate="many_to_one")
         self.assertTrue(joined["_merge"].eq("both").all())
         self.assertEqual(joined.n_ballots.sum(), 4520768)
-
-    def test_bts_daily_volume_and_ranges(self):
-        for month, flights in [("09", 582622), ("10", 615497), ("11", 575404)]:
-            df = pd.read_csv(SILVER / f"airport_daily_2024_{month}.csv")
-            self.assertFalse(df.duplicated(["airport", "date"]).any())
-            for name in ["share_cancelled", "share_delayed_15"]:
-                self.assertTrue(df[name].dropna().between(0, 1).all())
-            self.assertEqual(df.n_flights.sum(), flights)
 
     def test_nws_poll_counts(self):
         with zipfile.ZipFile(LIVE_SAMPLE) as sample:

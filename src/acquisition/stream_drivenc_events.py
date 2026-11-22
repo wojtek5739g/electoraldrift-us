@@ -8,8 +8,10 @@ Same API: other state 511 sites use the same /api/v2/get/event interface (e.g. 5
         az511.com). Use --base-url and that site's key to collect another state.
 Output: data/bronze/drivenc_events/events_<YYYYmmdd_HHMMSS>.jsonl - one line = one event in one
         poll, with selected fields and county_fips (NC county name -> FIPS).
-The live feature for Model 2 is the same as the historical Helene feature: number of road
-closures active in a county on a given day (see batch_ncdot_helene.py).
+Daily feature (speed layer): `--aggregate` turns all saved snapshots into
+data/silver/nc_accidents_daily_live.csv - accidents per county and day, each accident counted once
+on its start date (Eastern Time), with the same baseline and accidents_rel as the historical
+US Accidents table (shared code in road_features.py).
 """
 from __future__ import annotations
 
@@ -22,12 +24,16 @@ from datetime import datetime, timezone
 
 import pandas as pd
 
-from common import BRONZE, REFERENCE, get_json, get_logger, make_session, now_utc, write_manifest
+from common import BRONZE, REFERENCE, SILVER, get_json, get_logger, make_session, now_utc, write_manifest
+from road_features import add_relative, county_day_counts
 
 SOURCE = "drivenc_events"
 BASE_URL = "https://www.drivenc.gov"
 KEEP = ["ID", "RoadwayName", "DirectionOfTravel", "EventType", "EventSubType", "IsFullClosure",
         "Severity", "County", "Latitude", "Longitude", "StartDate", "PlannedEndDate", "LastUpdated"]
+# event types counted as accidents; the exact DriveNC values are checked in the aggregation log
+ACCIDENT_PATTERN = r"crash|accident|collision|vehicle"
+SEVERE_LEVELS = {"major", "severe", "critical"}
 log = get_logger(SOURCE)
 
 
@@ -99,11 +105,47 @@ def run(polls: int = 3, interval: int = 60, base_url: str = BASE_URL, state: str
     return str(out)
 
 
+def aggregate_daily(state: str = "NC") -> str | None:
+    """All saved snapshots -> accidents per county and day (+ baseline and accidents_rel)."""
+    files = sorted((BRONZE / SOURCE).glob("events_*.jsonl"))
+    rows = [json.loads(line) for f in files for line in f.read_text(encoding="utf-8").splitlines() if line]
+    if not rows:
+        log.error("No DriveNC snapshots in %s - run the stream first", BRONZE / SOURCE)
+        return None
+    ev = pd.DataFrame(rows)
+    kind = ev["EventType"].fillna("") + " / " + ev["EventSubType"].fillna("")
+    log.info("Event types seen: %s", kind.value_counts().head(15).to_dict())
+    acc = ev[kind.str.contains(ACCIDENT_PATTERN, case=False, regex=True)]
+    acc = acc.sort_values("polled_at").drop_duplicates("ID", keep="last")  # one row per accident
+    start = pd.to_datetime(acc["StartDate"].fillna(acc["polled_at"]), utc=True, errors="coerce")
+    events = pd.DataFrame({
+        "county_fips": acc["county_fips"],
+        "date": start.dt.tz_convert("America/New_York").dt.strftime("%Y-%m-%d"),
+        "severe": acc["Severity"].fillna("").str.lower().isin(SEVERE_LEVELS) | acc["IsFullClosure"].eq(True),
+    })
+    lookup = county_lookup(state)
+    today = pd.Timestamp.now(tz="America/New_York").strftime("%Y-%m-%d")
+    dates = events["date"].dropna()
+    first = min(dates.min(), today) if len(dates) else today
+    last = max(dates.max(), today) if len(dates) else today
+    daily = add_relative(county_day_counts(events, list(lookup.values()), first, last))
+    out = SILVER / "nc_accidents_daily_live.csv"
+    daily.to_csv(out, index=False)
+    log.info("Live accidents: %d unique (%d without county) in %d snapshot files -> %s",
+             len(events), int(events["county_fips"].isna().sum()), len(files), out)
+    return str(out)
+
+
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("--polls", type=int, default=3)
     p.add_argument("--interval", type=int, default=60)
     p.add_argument("--base-url", default=BASE_URL, help="another 511 site, e.g. https://511wi.gov")
     p.add_argument("--state", default="NC", help="state code for the county lookup, e.g. WI")
+    p.add_argument("--aggregate", action="store_true",
+                   help="only build the daily accident table from saved snapshots (no API calls)")
     a = p.parse_args()
-    run(a.polls, a.interval, a.base_url, a.state)
+    if a.aggregate:
+        aggregate_daily(a.state)
+    else:
+        run(a.polls, a.interval, a.base_url, a.state)

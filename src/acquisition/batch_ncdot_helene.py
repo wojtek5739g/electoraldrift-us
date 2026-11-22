@@ -118,13 +118,13 @@ def daily_counts(closures: pd.DataFrame, counties: pd.DataFrame, start: str, end
 
 
 def run(start: str = WINDOW[0], end: str = WINDOW[1]) -> str | None:
-    if not PDF_PATH.exists():
+    if not PDF_PATH.exists() or PDF_PATH.stat().st_size == 0:  # empty file = failed earlier download
         try:
-            ok = download(URL, PDF_PATH, SOURCE)
+            ok = download(URL, PDF_PATH, SOURCE, overwrite=True)
         except Exception as e:  # noqa: BLE001
             log.warning("Download error: %s", e)
             ok = None
-        if not ok or not PDF_PATH.exists():
+        if not ok or not PDF_PATH.exists() or PDF_PATH.stat().st_size == 0:
             log.error("Download failed. Save the PDF manually from %s as %s", URL, PDF_PATH)
             write_manifest(SOURCE, URL, None, "failed")
             return None

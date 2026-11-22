@@ -1,6 +1,7 @@
 """Offline functional tests. All source records and HTTP responses are fixtures."""
 import csv
 import io
+import json
 import sys
 import tempfile
 import unittest
@@ -18,6 +19,8 @@ import batch_nc_absentee as nc
 import batch_open_meteo as weather
 import batch_ncdot_helene as helene
 import stream_drivenc_events as drivenc
+import batch_us_accidents as accidents
+import road_features
 import common
 
 
@@ -124,4 +127,44 @@ class AcquisitionTests(unittest.TestCase):
         self.assertEqual((rec["county_fips"], rec["StartDate"]), ("37021", "2024-10-01T00:00:00+00:00"))
         with patch.dict(drivenc.os.environ, {}, clear=True):
             self.assertIsNone(drivenc.run(polls=1))
+
+    def test_accident_feature_relative_to_baseline(self):
+        days = pd.date_range("2016-06-01", "2016-10-20").strftime("%Y-%m-%d")
+        events = pd.DataFrame({"county_fips": "37183", "date": list(days) + ["2016-10-20"] * 4,
+                               "severe": [False] * len(days) + [True] * 4})
+        daily = road_features.add_relative(
+            road_features.county_day_counts(events, ["37183", "37063"], days[0], days[-1]))
+        last = daily[(daily.county_fips == "37183") & (daily.date == "2016-10-20")].iloc[0]
+        self.assertEqual((last.accidents, last.accidents_severe, last.baseline), (5, 4, 1.0))
+        self.assertAlmostEqual(last.accidents_rel, 5.5 / 1.5)
+        self.assertTrue(daily[daily.date < "2016-06-29"].accidents_rel.isna().all())  # < 28 days
+
+    def test_us_accidents_zip_filters_nc(self):
+        archive = self.folder / "archive.zip"
+        with zipfile.ZipFile(archive, "w") as z:
+            z.writestr("US_Accidents_March23.csv",
+                       "ID,Severity,Start_Time,County,State\n"
+                       "A1,2,2016-10-20 08:00:00.000000000,Wake,NC\n"
+                       "A2,4,2016-10-20 09:00:00,Wake,NC\n"
+                       "A3,2,2016-10-20 09:00:00,Wake,VA\n")
+        events = accidents.to_events(accidents.read_nc(archive), {"wake": "37183"})
+        self.assertEqual(len(events), 2)
+        self.assertEqual(events.severe.tolist(), [False, True])
+        self.assertEqual(set(events.date), {"2016-10-20"})
+
+    def test_drivenc_daily_counts_each_accident_once(self):
+        folder = self.folder / "drivenc_events"
+        folder.mkdir()
+        start = int(pd.Timestamp("2026-11-22 03:00", tz="UTC").timestamp())
+        def rec(i, kind, polled):
+            return drivenc.to_record({"ID": i, "EventType": kind, "EventSubType": "", "County": "Wake",
+                                      "StartDate": start}, polled, {"wake": "37183"})
+        lines = [rec(1, "Crash", "2026-11-22T10:00:00+00:00"), rec(1, "Crash", "2026-11-22T10:01:00+00:00"),
+                 rec(2, "Roadwork", "2026-11-22T10:00:00+00:00")]
+        (folder / "events_1.jsonl").write_text("\n".join(json.dumps(r) for r in lines))
+        with patch.object(drivenc, "BRONZE", self.folder), patch.object(drivenc, "SILVER", self.folder), \
+                patch.object(drivenc, "county_lookup", return_value={"wake": "37183"}):
+            daily = pd.read_csv(drivenc.aggregate_daily(), dtype={"county_fips": str})
+        hit = daily[daily.accidents > 0]
+        self.assertEqual(hit[["county_fips", "date", "accidents"]].values.tolist(), [["37183", "2026-11-21", 1]])
 
