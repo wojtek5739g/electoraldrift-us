@@ -19,6 +19,8 @@ ElectoralDrift US is a county-level US presidential election analytics project. 
 | Weather | NOAA NWS alerts | stream (REST every 60 s) | weather map overlay | `stream_nws_alerts.py` |
 | Transport | BTS Airline On-Time | batch (ZIP files) | flight delays – history | `batch_bts_ontime.py` |
 | Transport | FAA NAS Status | stream (REST every 60 s) | airport-status map overlay | `stream_faa_airports.py` |
+| Roads (NC) | NCDOT Hurricane Helene closure list (PDF) | batch (file) | Model 2 feature: road closures per county and day (history) | `batch_ncdot_helene.py` |
+| Roads (NC) | DriveNC events API (NCDOT) | stream (REST every 60 s, key) | Model 2 feature (live) + road-closure map overlay | `stream_drivenc_events.py` |
 | Reference | US Census ACS 5-year | batch (Census API, key) | socio-economic features | `batch_census_acs.py` |
 | Reference | Census Gazetteer | batch (file) | county centroids | `batch_county_centroids.py` |
 | Reference | OurAirports | batch (file) | airport → county | `batch_airports_reference.py` |
@@ -46,6 +48,7 @@ PowerShell (prompt starts with `PS`):
 ```
 $env:CENSUS_API_KEY="your_key"
 $env:EDUS_CONTACT="your.email@university.edu"
+$env:DRIVENC_API_KEY="your_drivenc_key"
 ```
 
 cmd: `set CENSUS_API_KEY=your_key`. The setting only lives in the current terminal window.
@@ -53,6 +56,11 @@ cmd: `set CENSUS_API_KEY=your_key`. The setting only lives in the current termin
 MEDSL requires a guestbook form before download, so `countypres_2000-2024.csv` is downloaded manually
 from https://doi.org/10.7910/DVN/VOQCHQ ("Comma Separated Values (Original File Format)")
 and saved in `data/bronze/medsl/`.
+
+The Helene closure list is downloaded automatically when the NCDOT site allows it. Otherwise save
+https://www.ncdot.gov/TIMS/Helene%20Closures%20for%20Citizen%20Info.pdf as
+`data/bronze/ncdot_helene/helene_closures.pdf`. The DriveNC live feed needs a free developer key
+from https://www.drivenc.gov (env var `DRIVENC_API_KEY`); the API allows 10 calls per 60 s.
 
 Run `python run_samples.py` after the manual download and environment setup. For a shorter run use `--skip-nc` or `--skip-bls`. Select named steps with `python run_samples.py --only bts profile`. Run `python run_samples.py --help` for the full list. A failed step produces a nonzero process exit code.
 
@@ -69,7 +77,7 @@ Run `python run_samples.py` after the manual download and environment setup. For
 
 ## Reproduce the PM2 tests
 
-With the project environment active, run the five functional tests without API keys or downloads:
+With the project environment active, run the seven functional tests without API keys or downloads:
 
 ```powershell
 python -m unittest discover -s tests -p test_acquisition.py -v

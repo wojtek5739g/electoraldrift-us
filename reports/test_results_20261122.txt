@@ -1,27 +1,30 @@
-# Test run 2026-11-22 18:07 UTC
+# Test run 2026-11-22 18:32 UTC
 
 ## python -m unittest discover -s tests -p test_acquisition.py -v
-test_ballots_across_chunks (test_acquisition.AcquisitionTests) ... 2026-11-22 18:07:27,626 | nc_absentee | INFO | Columns (5): ['county_desc', 'voter_party_code', 'ballot_rtn_dt', 'ballot_rtn_status', 'ballot_req_type']
-2026-11-22 18:07:27,630 | nc_absentee | INFO | Read 1 rows
-2026-11-22 18:07:27,633 | nc_absentee | INFO | Read 2 rows
-2026-11-22 18:07:27,636 | nc_absentee | INFO | Read 3 rows
-2026-11-22 18:07:27,639 | nc_absentee | INFO | Read 4 rows
-2026-11-22 18:07:27,648 | nc_absentee | WARNING | Excluded [after_election_day]: 1 aggregate rows (1 ballots), e.g. ['11/06/2024']
-2026-11-22 18:07:27,659 | nc_absentee | INFO | Excluded rows -> <tmp>/nc_rejected_dates_20241105.csv
-2026-11-22 18:07:27,662 | nc_absentee | INFO | NC: 4 ballots in file, aggregate 1 rows (2 accepted ballots in window) -> <tmp>/nc_early_votes_daily_20241105.csv
+test_ballots_across_chunks (test_acquisition.AcquisitionTests) ... 2026-11-22 18:32:42,327 | nc_absentee | INFO | Columns (5): ['county_desc', 'voter_party_code', 'ballot_rtn_dt', 'ballot_rtn_status', 'ballot_req_type']
+2026-11-22 18:32:42,331 | nc_absentee | INFO | Read 1 rows
+2026-11-22 18:32:42,334 | nc_absentee | INFO | Read 2 rows
+2026-11-22 18:32:42,337 | nc_absentee | INFO | Read 3 rows
+2026-11-22 18:32:42,340 | nc_absentee | INFO | Read 4 rows
+2026-11-22 18:32:42,350 | nc_absentee | WARNING | Excluded [after_election_day]: 1 aggregate rows (1 ballots), e.g. ['11/06/2024']
+2026-11-22 18:32:42,351 | nc_absentee | INFO | Excluded rows -> <tmp>/nc_rejected_dates_20241105.csv
+2026-11-22 18:32:42,354 | nc_absentee | INFO | NC: 4 ballots in file, aggregate 1 rows (2 accepted ballots in window) -> <tmp>/nc_early_votes_daily_20241105.csv
 ok
-test_missing_schema_fails_runner (test_acquisition.AcquisitionTests) ... 2026-11-22 18:07:27,669 | nc_absentee | INFO | Columns (2): ['county_desc', 'voter_party_code']
+test_drivenc_record_and_missing_key (test_acquisition.AcquisitionTests) ... 2026-11-22 18:32:42,358 | drivenc_events | ERROR | A developer key is required. Request one on https://www.drivenc.gov and set it, in PowerShell: $env:DRIVENC_API_KEY="<key>"   (cmd: set DRIVENC_API_KEY=<key>)
 ok
-test_repeat_download (test_acquisition.AcquisitionTests) ... 2026-11-22 18:07:27,678 | fixture | INFO | Downloaded archive.csv (0.0 MB)
-2026-11-22 18:07:27,679 | fixture | INFO | Already downloaded, skipping: archive.csv
+test_helene_daily_closure_counts (test_acquisition.AcquisitionTests) ... ok
+test_missing_schema_fails_runner (test_acquisition.AcquisitionTests) ... 2026-11-22 18:32:42,377 | nc_absentee | INFO | Columns (2): ['county_desc', 'voter_party_code']
 ok
-test_retry_429_then_success (test_acquisition.AcquisitionTests) ... 2026-11-22 18:07:27,683 | fixture | WARNING | HTTP 429, retrying (1/3)
-2026-11-22 18:07:27,685 | fixture | INFO | Downloaded archive.csv (0.0 MB)
+test_repeat_download (test_acquisition.AcquisitionTests) ... 2026-11-22 18:32:42,387 | fixture | INFO | Downloaded archive.csv (0.0 MB)
+2026-11-22 18:32:42,388 | fixture | INFO | Already downloaded, skipping: archive.csv
+ok
+test_retry_429_then_success (test_acquisition.AcquisitionTests) ... 2026-11-22 18:32:42,391 | fixture | WARNING | HTTP 429, retrying (1/3)
+2026-11-22 18:32:42,393 | fixture | INFO | Downloaded archive.csv (0.0 MB)
 ok
 test_weather_missing_location (test_acquisition.AcquisitionTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 5 tests in 0.067s
+Ran 7 tests in 0.074s
 
 OK
 
@@ -33,6 +36,6 @@ test_nws_poll_counts (__main__.SampleQuality) ... ok
 test_weather_covers_ballots (__main__.SampleQuality) ... ok
 
 ----------------------------------------------------------------------
-Ran 5 tests in 0.137s
+Ran 5 tests in 0.129s
 
 OK

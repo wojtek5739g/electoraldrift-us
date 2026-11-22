@@ -27,8 +27,10 @@ import batch_census_acs  # noqa: E402
 import batch_county_centroids  # noqa: E402
 import batch_medsl  # noqa: E402
 import batch_nc_absentee  # noqa: E402
+import batch_ncdot_helene  # noqa: E402
 import batch_open_meteo  # noqa: E402
 import profile_data  # noqa: E402
+import stream_drivenc_events  # noqa: E402
 import stream_faa_airports  # noqa: E402
 import stream_nws_alerts  # noqa: E402
 
@@ -46,6 +48,9 @@ STEPS = [
     # transport
     ("bts", batch_bts_ontime.run),
     ("faa_live", lambda: stream_faa_airports.run(polls=2, interval=60)),
+    # roads (North Carolina): Helene closures (history) + DriveNC events (live, needs a key)
+    ("helene", batch_ncdot_helene.run),
+    ("drivenc_live", lambda: stream_drivenc_events.run(polls=2, interval=60)),
     # optional: economy
     ("bls_laus", batch_bls_laus.run),
     # profile of everything above

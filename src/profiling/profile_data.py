@@ -17,7 +17,7 @@ REPORTS = ROOT / "reports"
 PATTERNS = [
     "bronze/medsl/*.csv", "bronze/medsl/*.tab", "bronze/census_acs/*.csv",
     "reference/*.csv", "silver/*.csv",
-    "bronze/nws_alerts/*.jsonl", "bronze/faa_nas/*.jsonl",
+    "bronze/nws_alerts/*.jsonl", "bronze/faa_nas/*.jsonl", "bronze/drivenc_events/*.jsonl",
 ]
 # outputs of sources postponed to Milestone 3 (disinformation) are not profiled
 SKIP_PREFIXES = ("gdelt_", "liar_", "ga_")

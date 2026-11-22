@@ -5,6 +5,8 @@ import sys
 import tempfile
 import unittest
 import zipfile
+
+import pandas as pd
 from contextlib import ExitStack, redirect_stderr, redirect_stdout
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -14,6 +16,8 @@ sys.path.insert(0, str(ROOT))
 import run_samples
 import batch_nc_absentee as nc
 import batch_open_meteo as weather
+import batch_ncdot_helene as helene
+import stream_drivenc_events as drivenc
 import common
 
 
@@ -90,4 +94,34 @@ class AcquisitionTests(unittest.TestCase):
     def test_weather_missing_location(self):
         with self.assertRaisesRegex(ValueError, "Expected 2 weather locations, received 1"):
             weather.flatten([{"daily": {}}], ["37001", "37003"])
+
+    COUNTIES = pd.DataFrame({"county_fips": ["37021", "37087", "37129"],
+                             "county": ["Buncombe", "Haywood", "New Hanover"],
+                             "lat": [35.6, 35.56, 34.18], "lon": [-82.53, -82.97, -77.87]})
+
+    def test_helene_daily_closure_counts(self):
+        counties = self.COUNTIES
+        lines = ["714542 2024-10-02 02:39:00 2024-10-10 15:23:35 SR-1505 Bald Creek Road "
+                 "Both Directions McElroy Lane Haywood Near Canton 35.61189 -82.89631",
+                 "720001 2024-10-05 08:00:00 2024-10-06 08:00:00 US-17 Ocean Hwy Heading North "
+                 "Market St New Hanover Wilmington 34.2 -77.9"]
+        rows = helene.parse_text_lines(lines, counties["county"].tolist())
+        self.assertEqual([r["county"] for r in rows], ["Haywood", "New Hanover"])
+        closures = helene.clean(pd.DataFrame(rows), counties)
+        daily = helene.daily_counts(closures, counties, "2024-09-20", "2024-11-05")
+        self.assertEqual(len(daily), 3 * 47)
+
+        def active(fips, day):
+            row = daily[(daily.county_fips == fips) & (daily.date == day)]
+            return int(row.closures_active.iloc[0])
+        self.assertEqual((active("37087", "2024-10-05"), active("37087", "2024-10-11")), (1, 0))
+        self.assertEqual(active("37129", "2024-10-05"), 1)
+
+    def test_drivenc_record_and_missing_key(self):
+        rec = drivenc.to_record({"ID": 1, "County": "Buncombe", "IsFullClosure": True,
+                                 "StartDate": 1727740800}, "2026-11-22T18:00:00+00:00",
+                                {"buncombe": "37021"})
+        self.assertEqual((rec["county_fips"], rec["StartDate"]), ("37021", "2024-10-01T00:00:00+00:00"))
+        with patch.dict(drivenc.os.environ, {}, clear=True):
+            self.assertIsNone(drivenc.run(polls=1))
 
