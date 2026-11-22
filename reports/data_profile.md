@@ -317,24 +317,6 @@
 | snowfall_sum | float64 | 0.0 | 9 | 0 | 2.8 |
 | wind_gusts_10m_max | float64 | 0.0 | 212 | 11.9 | 154.8 |
 
-## silver/weather_daily_NC_2024-10-01_2024-11-10.csv
-
-- File size: 0.19 MB
-- Rows: 4,100
-- Columns: 9
-
-| column | dtype | % missing | unique | min | max |
-|---|---|---|---|---|---|
-| county_fips | object | 0.0 | 100 |  |  |
-| date | object | 0.0 | 41 | 2024-10-01 00:00:00 | 2024-11-10 00:00:00 |
-| weather_code | int64 | 0.0 | 13 | 0 | 75 |
-| temperature_2m_max | float64 | 0.0 | 198 | 3.4 | 28.8 |
-| temperature_2m_min | float64 | 0.0 | 224 | -3.2 | 22.1 |
-| precipitation_sum | float64 | 0.0 | 114 | 0 | 34.1 |
-| rain_sum | float64 | 0.0 | 114 | 0 | 34.1 |
-| snowfall_sum | float64 | 0.0 | 9 | 0 | 2.8 |
-| wind_gusts_10m_max | float64 | 0.0 | 142 | 11.9 | 73.8 |
-
 ## bronze/nws_alerts/alerts_20261121_124650.jsonl
 
 - File size: 0.34 MB
