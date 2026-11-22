@@ -1,16 +1,75 @@
-# Terraform
-**/.terraform/*
+# Local data, logs, scratch
+data/
+logs/
+/tmp/pdfs/
+tmp/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+env/
+.python-version
+*.egg-info/
+.eggs/
+build/
+dist/
+pip-wheel-metadata/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.ipynb_checkpoints/
+
+# Secrets / env (keep *.example templates)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Frontend
+node_modules/
+app/frontend/dist/
+.vite/
+npm-debug.log*
+yarn-error.log*
+# Empty stub created by running npm in the repo root (the real one is app/frontend/package-lock.json)
+/package-lock.json
+
+# Terraform (state and secrets stay local; .terraform.lock.hcl should be committed)
+.terraform/
 *.tfstate
 *.tfstate.*
-*.tfvars
+*.tfplan
 crash.log
+crash.*.log
+terraform.tfvars
+*.auto.tfvars
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+*openrc*.sh
 
-# Credentials
-openrc*.sh
-*.env
-.env*data/
-logs/
-__pycache__/
-*.pyc
-.venv/
-.env
+# Docker
+docker-compose.override.yml
+
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Claude Code local settings
+.claude/settings.local.json

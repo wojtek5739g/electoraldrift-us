@@ -1,0 +1,23 @@
+# ElectoralDrift US - serving stack (Milestone 3, step 1).
+# Later steps add: postgres (PostGIS), redpanda, spark-streaming, producers.
+services:
+  backend:
+    build: ./app/backend
+    restart: unless-stopped
+    environment:
+      CORS_ORIGINS: "http://localhost"
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build: ./app/frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"

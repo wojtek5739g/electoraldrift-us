@@ -1,0 +1,25 @@
+#cloud-config
+# Runs once on first boot: installs Docker, clones the repo, starts the stack.
+package_update: true
+packages:
+  - git
+  - ca-certificates
+  - curl
+  - ufw
+
+runcmd:
+  # Docker Engine + Compose plugin (official convenience script)
+  - curl -fsSL https://get.docker.com | sh
+  - usermod -aG docker ubuntu
+  # Host firewall as a second layer behind the OpenStack security group
+  - ufw default deny incoming
+  - ufw allow 22/tcp
+  - ufw allow 80/tcp
+  - ufw allow 443/tcp
+  - ufw --force enable
+  # App
+  - git clone --branch ${repo_branch} ${repo_url} /opt/electoraldrift
+  - chown -R ubuntu:ubuntu /opt/electoraldrift
+  - cd /opt/electoraldrift && docker compose up -d --build
+
+final_message: "ElectoralDrift VM ready after $UPTIME seconds"
