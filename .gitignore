@@ -8,4 +8,9 @@ crash.log
 # Credentials
 openrc*.sh
 *.env
-.env*
+.env*data/
+logs/
+__pycache__/
+*.pyc
+.venv/
+.env
