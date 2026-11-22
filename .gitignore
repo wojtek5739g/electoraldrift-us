@@ -1,7 +1,25 @@
-data/
-logs/
+# Python
 __pycache__/
 *.pyc
 .venv/
 .env
-/tmp/pdfs/
+.ipynb_checkpoints/
+
+# Data and runtime output (rebuilt with run_samples.py)
+data/
+logs/
+tmp/
+
+# LaTeX build files (if the Overleaf source is kept in the repo)
+*.aux
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

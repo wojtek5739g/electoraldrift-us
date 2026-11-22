@@ -8,8 +8,11 @@ Years:  2012, 2016, 2020, 2024 by default (presidential election years). The edu
         vintage require a reduced feature set or exclusion from the ACS model.
 Output: data/bronze/census_acs/acs5_<year>.json (raw response)
         data/bronze/census_acs/acs5_<year>.csv  (same table with header + county_fips)
-Quality note: the API uses sentinel values such as -666666666 for "not available";
-        they must be replaced with NULL in the Silver layer.
+        data/silver/census_acs_<year>.csv       (numeric columns, sentinels replaced with NULL)
+Quality note: the API uses negative sentinel values such as -666666666 for "not available";
+        they are replaced with NULL in the Silver layer (clean_to_silver).
+        Rebuild Silver from saved Bronze files without an API key:
+        python src/acquisition/batch_census_acs.py --silver-only
 """
 from __future__ import annotations
 
@@ -18,7 +21,7 @@ import os
 
 import pandas as pd
 
-from common import BRONZE, get_json, get_logger, make_session, save_json, write_manifest
+from common import BRONZE, SILVER, get_json, get_logger, make_session, save_json, write_manifest
 
 SOURCE = "census_acs"
 log = get_logger(SOURCE)
@@ -37,6 +40,30 @@ VARIABLES = {
     "B23025_003E": "civilian_labor_force",
     "B23025_005E": "unemployed",
 }
+
+# Census "annotation" codes returned instead of an estimate
+# (https://www.census.gov/data/developers/data-sets/acs-1year/notes-on-acs-estimate-and-annotation-values.html)
+SENTINELS = [-999999999, -888888888, -666666666, -555555555, -333333333, -222222222]
+
+
+def clean_to_silver(year: int) -> str | None:
+    """Bronze acs5_<year>.csv -> Silver census_acs_<year>.csv with sentinels set to NULL."""
+    src = BRONZE / SOURCE / f"acs5_{year}.csv"
+    if not src.exists():
+        log.warning("No Bronze file for ACS %s: %s", year, src)
+        return None
+    df = pd.read_csv(src, dtype={"county_fips": str, "state": str, "county": str})
+    n_replaced = 0
+    for col in VARIABLES.values():
+        df[col] = pd.to_numeric(df[col], errors="coerce")
+        mask = df[col].isin(SENTINELS)
+        n_replaced += int(mask.sum())
+        df.loc[mask, col] = pd.NA
+    SILVER.mkdir(parents=True, exist_ok=True)
+    out = SILVER / f"census_acs_{year}.csv"
+    df.to_csv(out, index=False)
+    log.info("ACS %s Silver: %d counties, %d sentinel values set to NULL", year, len(df), n_replaced)
+    return str(out)
 
 
 def fetch_year(year: int, session) -> pd.DataFrame | None:
@@ -58,6 +85,7 @@ def fetch_year(year: int, session) -> pd.DataFrame | None:
     out = BRONZE / SOURCE / f"acs5_{year}.csv"
     df.to_csv(out, index=False)
     log.info("ACS %s: %d counties, columns: %s", year, len(df), list(df.columns))
+    clean_to_silver(year)
     return df
 
 
@@ -83,4 +111,11 @@ def run(years=(2012, 2016, 2020, 2024)) -> list[str]:
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("--years", nargs="+", type=int, default=[2012, 2016, 2020, 2024])
-    run(p.parse_args().years)
+    p.add_argument("--silver-only", action="store_true",
+                   help="only rebuild Silver tables from saved Bronze CSVs (no API key needed)")
+    a = p.parse_args()
+    if a.silver_only:
+        for y in a.years:
+            clean_to_silver(y)
+    else:
+        run(a.years)

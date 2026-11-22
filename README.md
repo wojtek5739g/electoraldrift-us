@@ -59,7 +59,7 @@ Run `python run_samples.py` after the manual download and environment setup. For
 ## Outputs
 
 - `data/bronze/` – downloaded files, API snapshots and a manifest; NWS retains selected fields, FAA keeps XML plus extracted JSONL
-- `data/silver/` – first cleaned tables (e.g. weather county × day, airport × day)
+- `data/silver/` – first cleaned tables (e.g. weather county × day, airport × day, ACS with Census sentinel codes such as -666666666 replaced by NULL)
 - `data/reference/` – lookup tables (county centroids, airport → county)
 - `logs/` – per-source logs + `run_summary_*.txt` (OK/FAIL per step)
 - `reports/data_profile.md` – data profile: rows, columns, missing values, date ranges
@@ -82,6 +82,7 @@ python run_samples.py --only centroids nc_absentee open_meteo bts
 python tests/verify_samples.py
 ```
 
-## Rebuild the documents
+## Documents
 
-The report source is `reports/overleaf/main.tex`. Import the root `ElectoralDrift_Report_overleaf.zip` into Overleaf or compile the source with LaTeX. The PDFs submitted for this milestone are in `output/pdf/`. To regenerate the presentation and test PDF after checking the local samples, install the optional document dependency with `python -m pip install reportlab` and run `python reports/build_companions.py`.
+The project report is written in Overleaf (LaTeX). The PDFs for this milestone are exported from Overleaf and stored in `output/pdf/`:
+`ElectoralDrift_Report.pdf`, `ElectoralDrift_Presentation.pdf` and `ElectoralDrift_Tests.pdf`.
