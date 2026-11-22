@@ -130,6 +130,22 @@
 | lon | float64 | 0.0 | 3,222 | -164.2 | 179.6 |
 | land_sqmi | float64 | 0.0 | 3,218 | 2.046 | 1.458e+05 |
 
+## silver\airport_daily_2024_09.csv
+
+- File size: 0.49 MB
+- Rows: 9,865
+- Columns: 7
+
+| column | dtype | % missing | unique | min | max |
+|---|---|---|---|---|---|
+| date | str | 0.0 | 30 | 2024-09-01 00:00:00 | 2024-09-30 00:00:00 |
+| airport | str | 0.0 | 340 |  |  |
+| state | str | 0.0 | 52 |  |  |
+| n_flights | int64 | 0.0 | 538 | 1 | 1036 |
+| mean_dep_delay_min | float64 | 0.2 | 4,544 | 0 | 1021 |
+| share_delayed_15 | float64 | 0.2 | 1,577 | 0 | 1 |
+| share_cancelled | float64 | 0.0 | 521 | 0 | 1 |
+
 ## silver\airport_daily_2024_10.csv
 
 - File size: 0.50 MB
@@ -204,6 +220,24 @@
 | unemp_rate_oct | float64 | 0.0 | 216 | 1 | 28.4 |
 | unemp_change_12m | float64 | 0.0 | 193 | -24.7 | 16 |
 | election_year | int64 | 0.0 | 7 | 2000 | 2024 |
+
+## silver\weather_daily_NC_2024-09-20_2024-11-05.csv
+
+- File size: 0.22 MB
+- Rows: 4,700
+- Columns: 9
+
+| column | dtype | % missing | unique | min | max |
+|---|---|---|---|---|---|
+| county_fips | str | 0.0 | 100 |  |  |
+| date | str | 0.0 | 47 | 2024-09-20 00:00:00 | 2024-11-05 00:00:00 |
+| weather_code | int64 | 0.0 | 13 | 0 | 75 |
+| temperature_2m_max | float64 | 0.0 | 224 | 3.4 | 32.2 |
+| temperature_2m_min | float64 | 0.0 | 254 | -3.2 | 24.7 |
+| precipitation_sum | float64 | 0.0 | 305 | 0 | 181.3 |
+| rain_sum | float64 | 0.0 | 304 | 0 | 181.3 |
+| snowfall_sum | float64 | 0.0 | 9 | 0 | 2.8 |
+| wind_gusts_10m_max | float64 | 0.0 | 212 | 11.9 | 154.8 |
 
 ## silver\weather_daily_NC_2024-10-01_2024-11-10.csv
 

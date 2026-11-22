@@ -49,8 +49,7 @@ def run(election: str = "2024_11_05", chunksize: int = 500_000) -> str | None:
     needed = [COUNTY, PARTY, RETURN_DT, STATUS, BALLOT_TYPE]
     missing = [c for c in needed if c not in cols]
     if missing:
-        log.warning("Missing columns %s - check %s and fix the names in the script", missing, info)
-        return str(info)
+        raise ValueError(f"Missing required NC ballot columns: {', '.join(missing)}. See {info.name}")
 
     parts, n_rows = [], 0
     with zipfile.ZipFile(dest) as z:

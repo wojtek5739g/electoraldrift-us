@@ -3,8 +3,9 @@
 API:    https://api.census.gov/data/{year}/acs/acs5  (free API key REQUIRED, env var CENSUS_API_KEY;
         sign up at https://api.census.gov/data/key_signup.html)
 Years:  2012, 2016, 2020, 2024 by default (presidential election years). The education table
-        B15003 starts in 2012, so the 2012 vintage is also used for the 2000-2008 elections
-        (approximation: county structure changes slowly).
+        A vintage is a reference period. A historical model may only use estimates
+        already published on its forecast date. Earlier cycles without an eligible
+        vintage require a reduced feature set or exclusion from the ACS model.
 Output: data/bronze/census_acs/acs5_<year>.json (raw response)
         data/bronze/census_acs/acs5_<year>.csv  (same table with header + county_fips)
 Quality note: the API uses sentinel values such as -666666666 for "not available";

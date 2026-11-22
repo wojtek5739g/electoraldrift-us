@@ -53,16 +53,18 @@ STEPS = [
 ]
 
 
-def main() -> None:
+def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--skip-nc", action="store_true")
     p.add_argument("--skip-bls", action="store_true")
-    p.add_argument("--only", nargs="+", default=None)
+    p.add_argument("--only", nargs="+", choices=[name for name, _ in STEPS])
     a = p.parse_args()
     skip = {"nc_absentee"} if a.skip_nc else set()
     if a.skip_bls:
         skip.add("bls_laus")
     steps = [s for s in STEPS if (a.only is None or s[0] in a.only) and s[0] not in skip]
+    if not steps:
+        p.error("No steps selected after applying the skip options")
     results = []
     for name, fn in steps:
         print(f"\n===== {name} =====", flush=True)
@@ -80,7 +82,8 @@ def main() -> None:
     lines = [f"{n:14s} {s:40s} {t:5d}s  {o}" for n, s, t, o in results]
     path.write_text("\n".join(lines), encoding="utf-8")
     print("\n===== SUMMARY =====\n" + "\n".join(lines) + f"\n\nSaved: {path}")
+    return int(any(status != "OK" for _, status, _, _ in results))
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
