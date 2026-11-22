@@ -64,3 +64,59 @@ Without it: `python run_samples.py --skip-nc`. A single step: `python run_sample
 - `reports/data_profile.md` – data profile: rows, columns, missing values, date ranges
 
 `data/` is not committed to git (see `.gitignore`); `reports/` is.
+
+## Deployment (OVHcloud, Terraform)
+
+The web app (FastAPI + React/deck.gl, NC 2024 county results) runs on one OVHcloud Public Cloud VM.
+Terraform (`deploy/terraform/`) creates the VM, firewall and SSH key; on first boot cloud-init
+(`cloud-init.yaml.tftpl`) installs Docker, clones this repo and runs `docker compose up -d --build`.
+
+### First deployment
+
+One-time setup:
+
+1. Install Terraform and Git for Windows (for Git Bash): `winget install Hashicorp.Terraform`, `winget install Git.Git`.
+2. Create an SSH key: `ssh-keygen -t ed25519` (accept the default path).
+3. In the OVHcloud Control Panel: Public Cloud → your project → Project Management → Users → create a user with
+   the Administrator role. On its `...` menu choose **Download OpenStack's RC file** for your region and save it as
+   `deploy/terraform/openrc.sh` (git-ignored, never commit it).
+
+Build the map data and push the code (cloud-init deploys the `main` branch from GitHub):
+
+```
+python scripts/prepare_nc_2024_map.py      # writes app/backend/assets/nc_2024_counties.geojson
+git add . && git commit -m "..." && git push origin main
+```
+
+Create the VM (in **Git Bash**):
+
+```bash
+cd deploy/terraform
+cp terraform.tfvars.example terraform.tfvars   # set admin_cidr = "<your IP from ifconfig.me>/32"
+source openrc.sh                               # asks for the OpenStack user's password
+terraform init
+terraform plan
+terraform apply                                # prints url, public_ip, ssh
+```
+
+Wait ~5 minutes and open the printed `url`. If it does not load:
+`ssh ubuntu@<public_ip> "sudo tail -n 50 /var/log/cloud-init-output.log"`.
+
+### Redeploying changed code
+
+For changes in `app/`, `scripts/`, the map data or `docker-compose.yml` (same VM, same IP):
+
+```bash
+git add . && git commit -m "..." && git push origin main
+bash deploy/deploy_update.sh $(terraform -chdir=deploy/terraform output -raw public_ip)
+```
+
+The script pulls the latest commit on the VM and runs `docker compose up -d --build`.
+Hard-refresh the page (Ctrl+F5) to see the new frontend.
+
+For infrastructure changes (`deploy/terraform/*.tf` or `terraform.tfvars`, e.g. `flavor = "d2-8"`):
+`source openrc.sh && terraform plan && terraform apply` in `deploy/terraform`.
+A changed `cloud-init.yaml.tftpl` only runs on a new VM:
+`terraform apply -replace=openstack_compute_instance_v2.app` (the IP may change).
+
+To stop all costs: `terraform destroy`.

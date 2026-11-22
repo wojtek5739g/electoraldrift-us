@@ -58,6 +58,7 @@ override.tf.json
 *_override.tf
 *_override.tf.json
 *openrc*.sh
+tfplan
 
 # Docker
 docker-compose.override.yml
