@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import os
 import time
 from datetime import datetime, timezone
@@ -28,6 +29,20 @@ BASE_URL = "https://www.drivenc.gov"
 KEEP = ["ID", "RoadwayName", "DirectionOfTravel", "EventType", "EventSubType", "IsFullClosure",
         "Severity", "County", "Latitude", "Longitude", "StartDate", "PlannedEndDate", "LastUpdated"]
 log = get_logger(SOURCE)
+
+
+class _RedactKey(logging.Filter):
+    """Removes the API key from log messages (it is part of the request URL in error messages)."""
+
+    def __init__(self, key: str):
+        super().__init__()
+        self.key = key
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        msg = record.getMessage()
+        if self.key and self.key in msg:
+            record.msg, record.args = msg.replace(self.key, "<KEY>"), ()
+        return True
 
 
 def county_lookup(state: str = "NC") -> dict[str, str]:
@@ -61,6 +76,7 @@ def run(polls: int = 3, interval: int = 60, base_url: str = BASE_URL, state: str
                   '$env:DRIVENC_API_KEY="<key>"   (cmd: set DRIVENC_API_KEY=<key>)', base_url)
         write_manifest(SOURCE, url, None, "missing_key")
         return None
+    log.addFilter(_RedactKey(key))
     if interval < 6:
         raise ValueError("The API allows 10 calls per 60 s; use an interval of at least 6 s")
     s = make_session()
