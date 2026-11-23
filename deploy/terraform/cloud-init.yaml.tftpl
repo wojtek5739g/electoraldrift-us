@@ -11,9 +11,9 @@ runcmd:
   # Docker Engine + Compose plugin (official convenience script)
   - curl -fsSL https://get.docker.com | sh
   - usermod -aG docker ubuntu
-  # Host firewall as a second layer behind the OpenStack security group
+  # Host firewall (the only port filter: the VM uses the permissive "default" security group)
   - ufw default deny incoming
-  - ufw allow 22/tcp
+  - ufw allow from ${admin_cidr} to any port 22 proto tcp
   - ufw allow 80/tcp
   - ufw allow 443/tcp
   - ufw --force enable
