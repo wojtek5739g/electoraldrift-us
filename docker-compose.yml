@@ -5,7 +5,7 @@ services:
     build: ./app/backend
     restart: unless-stopped
     environment:
-      CORS_ORIGINS: "http://localhost"
+      CORS_ORIGINS: "https://${SITE_ADDRESS:-localhost}"
     expose:
       - "8000"
     healthcheck:
@@ -19,5 +19,26 @@ services:
     restart: unless-stopped
     depends_on:
       - backend
+    expose:
+      - "80"
+
+  # HTTPS: Caddy gets and renews a Let's Encrypt certificate for SITE_ADDRESS
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - frontend
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-localhost}
     ports:
       - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

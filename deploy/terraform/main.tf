@@ -21,6 +21,7 @@ resource "openstack_compute_instance_v2" "app" {
     repo_url    = var.repo_url
     repo_branch = var.repo_branch
     admin_cidr  = var.admin_cidr
+    domain      = var.domain
   })
 
   lifecycle {

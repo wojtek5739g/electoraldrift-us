@@ -38,3 +38,9 @@ variable "repo_branch" {
   type        = string
   default     = "main"
 }
+
+variable "domain" {
+  description = "Domain for HTTPS (an A record must point to the VM). Empty = use <ip-with-dashes>.sslip.io"
+  type        = string
+  default     = ""
+}

@@ -19,6 +19,14 @@ runcmd:
   - ufw --force enable
   # App
   - git clone --branch ${repo_branch} ${repo_url} /opt/electoraldrift
+  # Hostname for the HTTPS certificate: your domain if set, else <ip-with-dashes>.sslip.io
+  - |
+    DOMAIN="${domain}"
+    if [ -z "$DOMAIN" ]; then
+      IP=$(curl -4 -fsS https://ifconfig.me)
+      DOMAIN="$(echo "$IP" | tr . -).sslip.io"
+    fi
+    echo "SITE_ADDRESS=$DOMAIN" > /opt/electoraldrift/.env
   - chown -R ubuntu:ubuntu /opt/electoraldrift
   - cd /opt/electoraldrift && docker compose up -d --build
 
