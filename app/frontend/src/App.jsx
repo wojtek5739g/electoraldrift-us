@@ -72,6 +72,11 @@ export default function App() {
   const [viewState, setViewState] = useState(NC_VIEW);
   const mapRef = useRef(null);
   const [pulse, setPulse] = useState(1);
+  const [panelOpen, setPanelOpen] = useState(() => { try { return localStorage.getItem("edus-panel-open") !== "0"; } catch { return true; } });
+  const togglePanel = () => setPanelOpen((o) => {
+    try { localStorage.setItem("edus-panel-open", o ? "0" : "1"); } catch { /* storage blocked */ }
+    return !o;
+  });
   const [finderOpen, setFinderOpen] = useState(() => { try { return localStorage.getItem("edus-finder-open") !== "0"; } catch { return true; } });
   const toggleFinder = () => setFinderOpen((o) => {
     try { localStorage.setItem("edus-finder-open", o ? "0" : "1"); } catch { /* storage blocked */ }
@@ -180,10 +185,18 @@ export default function App() {
   ].filter(Boolean) : [], [shown, flipped, pulse, selectedFeature]);
 
   return (
-    <div className="app">
-      <aside className="panel">
+    <div className={panelOpen ? "app" : "app panel-closed"}>
+      <aside className="panel" id="side-panel" inert={!panelOpen} aria-hidden={!panelOpen}>
         <h1>ElectoralDrift <span>US</span></h1>
         <p className="sub">2024 presidential election · {live ? "live predictions (mock)" : "county results"}</p>
+        <p className="about">
+          ElectoralDrift maps how US election outcomes could drift as conditions change. Today it shows certified
+          2024 North Carolina results by county and a per-user simulation that refreshes predicted margins every
+          60 s, with flipped counties and the biggest movers highlighted.
+          <span className="about-next"> Coming next: live model predictions driven by weather alerts, traffic
+          accidents, unemployment, early-vote data and disinformation signals; what-if scenarios; past elections;
+          and all 50 states with the 270-vote Electoral College tally.</span>
+        </p>
 
         <section>
           <h2>State</h2>
@@ -261,6 +274,8 @@ export default function App() {
       </aside>
 
       <main className="map" ref={mapRef}>
+        <button className="panel-tab" onClick={togglePanel} aria-expanded={panelOpen} aria-controls="side-panel"
+          title={panelOpen ? "Hide side panel" : "Show side panel"}>{panelOpen ? "‹" : "›"}</button>
         <DeckGL
           initialViewState={viewState}
           controller

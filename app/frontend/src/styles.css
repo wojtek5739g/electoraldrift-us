@@ -5,11 +5,17 @@ html, body, #root { margin: 0; height: 100%; font-family: system-ui, -apple-syst
    side-panel column; it is sized to that column so the face is not cropped away. */
 body { background: #fafbfc; }
 .app::before { content: ""; position: fixed; top: 0; left: 0; bottom: 0; width: 320px; z-index: 0; pointer-events: none;
-  background: url("../images/joe_biden.png") center top / cover no-repeat; opacity: 0.9; }
-.panel { position: relative; z-index: 1; width: 320px; flex-shrink: 0; overflow-y: auto; padding: 18px 18px 24px; background: rgba(250, 251, 252, 0.92); border-right: 1px solid #e3e6ea; }
+  background: url("../images/joe_biden.png") center top / cover no-repeat; opacity: 0.9; transition: transform .25s ease; }
+.panel { position: relative; z-index: 1; width: 320px; flex-shrink: 0; overflow-y: auto; padding: 18px 18px 24px; background: rgba(250, 251, 252, 0.92); border-right: 1px solid #e3e6ea; transition: margin-left .25s ease; }
+/* Folded side panel: slides out to the left; the map grows into the space. */
+.app.panel-closed .panel { margin-left: -320px; }
+.app.panel-closed::before { transform: translateX(-320px); }
+.panel-tab { position: absolute; left: 0; top: 50%; transform: translateY(-50%); z-index: 4; width: 18px; height: 56px; padding: 0; border: 1px solid #e3e6ea; border-left: 0; border-radius: 0 8px 8px 0; background: #fff; color: #4b5563; font-size: 16px; line-height: 1; box-shadow: 2px 0 8px rgba(0,0,0,.08); }
+.panel-tab:hover { background: #eef1f5; color: #1d2330; }
+.panel-tab:focus-visible { outline: 2px solid #2355be; outline-offset: 1px; }
 .panel h1 { font-size: 20px; margin: 0; letter-spacing: -0.3px; }
 .panel h1 span { color: #6b7280; font-weight: 500; }
-.sub { margin: 4px 0 14px; color: #6b7280; font-size: 13px; }
+.sub { margin: 4px 0 8px; color: #6b7280; font-size: 13px; }
 section { padding: 12px 0; border-top: 1px solid #eceff2; }
 h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: #6b7280; margin: 0 0 8px; font-weight: 600; }
 
@@ -120,3 +126,5 @@ button:disabled, input:disabled, .disabled, .disabled-block {
 .movers.finder { right: auto; left: 16px; width: 300px; }
 .finder .mv-body { overflow: visible; max-height: none; }
 .finder .ccard { margin-top: 10px; padding: 10px 0 0; border: 0; border-top: 1px solid #eceff2; border-radius: 0; }
+.about { margin: 0 0 14px; font-size: 12px; line-height: 1.5; color: #4b5563; }
+.about-next { color: #6b7280; }
