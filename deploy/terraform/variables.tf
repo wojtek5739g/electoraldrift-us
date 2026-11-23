@@ -5,9 +5,9 @@ variable "region" {
 }
 
 variable "flavor" {
-  description = "Instance size. b3-8 = 2 vCPU / 8 GB, enough for now and for Postgres later."
+  description = "Instance size. d2-4 (4 GB) is enough for the map; d2-8 (8 GB) when Postgres/Redpanda/Spark are added. OVHcloud only resizes upward; going smaller needs -replace."
   type        = string
-  default     = "b3-8"
+  default     = "d2-4"
 }
 
 variable "image" {
