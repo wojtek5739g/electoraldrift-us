@@ -28,6 +28,14 @@ SPEEDS = (1, 10, 60)
 MAX_SESSIONS = 500
 SESSION_TTL_S = 6 * 3600
 
+# Mock random-walk tuning (pp = percentage points of two-party margin).
+SWING_PHI, SWING_SIGMA = 0.97, 1.5     # persistence / step noise of statewide swing (pp)
+COUNTY_PHI, COUNTY_SIGMA = 0.9, 2.0    # same, per county
+MOMENTUM = 0.5                         # share of last step's swing change carried forward
+SHOCK_P, SHOCK_PP = 0.12, 6.0          # chance per step of a big statewide event, and its size
+POLAR_SIGMA = 1.0                      # urban/rural divergence: safe seats get safer (or converge)
+TURNOUT_SIGMA, TURNOUT_MAX = 0.008, 0.08
+
 _lock = threading.Lock()
 _sessions: dict[str, dict] = {}
 
@@ -53,20 +61,27 @@ def _summary(counties: dict) -> dict:
 
 
 def _mock_points(base_features: list[dict], seed: str, t0: datetime) -> list[dict]:
-    """Random walk around the certified results: statewide swing + county noise + turnout drift."""
+    """Random walk around the certified results: statewide swing with momentum and shocks,
+    county noise, polarization (lean-correlated) and turnout drift."""
     rng = random.Random(seed)
     base = {f["properties"]["fips"]: f["properties"] for f in base_features}
     swing = 0.0
+    last_d_swing = 0.0
     county_drift = {k: 0.0 for k in base}
     turnout = {k: 0.0 for k in base}
 
     points = []
     for seq in range(POINTS + 1):
         if seq > 0:
-            swing = 0.9 * swing + rng.gauss(0, 0.7)          # mean-reverting statewide shift (pp)
-            for k in base:
-                county_drift[k] = 0.85 * county_drift[k] + rng.gauss(0, 0.9)
-                turnout[k] = max(-0.05, min(0.05, turnout[k] + rng.gauss(0, 0.004)))
+            shock = rng.choice((-1, 1)) * rng.uniform(0.5, 1) * SHOCK_PP if rng.random() < SHOCK_P else 0.0
+            d_swing = MOMENTUM * last_d_swing + rng.gauss(0, SWING_SIGMA) + shock
+            swing = SWING_PHI * swing + d_swing
+            last_d_swing = d_swing
+            polar = rng.gauss(0, POLAR_SIGMA)  # >0: R counties get redder and D counties bluer
+            for k, p in base.items():
+                lean = max(-1, min(1, (p["margin_pp"] or 0) / 40))
+                county_drift[k] = COUNTY_PHI * county_drift[k] + rng.gauss(0, COUNTY_SIGMA) + polar * lean
+                turnout[k] = max(-TURNOUT_MAX, min(TURNOUT_MAX, turnout[k] + rng.gauss(0, TURNOUT_SIGMA)))
         counties = {}
         for k, p in base.items():
             if seq == 0:  # baseline = exact certified counts
