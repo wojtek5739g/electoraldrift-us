@@ -4,7 +4,7 @@ API:    https://archive-api.open-meteo.com/v1/archive  (no key, free for non-com
         ~10,000 "calls"/day - long periods and many locations count as several calls,
         so the full US is fetched in batches, possibly over several days).
         Multiple locations per request: latitude=a,b,c&longitude=x,y,z.
-Default sample: North Carolina, 2024 voting window (2024-10-01 .. 2024-11-10).
+Default sample: North Carolina, observed 2024 ballot returns (2024-09-20 .. 2024-11-05).
 Output: data/bronze/open_meteo/<state>_<start>_<end>/batch_XXX.json  (raw responses)
         data/silver/weather_daily_<state>_<start>_<end>.csv          (county_fips x day)
 """
@@ -22,9 +22,13 @@ URL = "https://archive-api.open-meteo.com/v1/archive"
 DAILY = ["weather_code", "temperature_2m_max", "temperature_2m_min", "precipitation_sum",
          "rain_sum", "snowfall_sum", "wind_gusts_10m_max"]
 log = get_logger(SOURCE)
+SAMPLE_START = "2024-09-20"
+SAMPLE_END = "2024-11-05"
 
 
 def flatten(responses: list[dict], fips: list[str]) -> pd.DataFrame:
+    if len(responses) != len(fips):
+        raise ValueError(f"Expected {len(fips)} weather locations, received {len(responses)}")
     frames = []
     for code, r in zip(fips, responses):
         d = pd.DataFrame(r["daily"])
@@ -33,7 +37,7 @@ def flatten(responses: list[dict], fips: list[str]) -> pd.DataFrame:
     return pd.concat(frames, ignore_index=True).rename(columns={"time": "date"})
 
 
-def run(state: str | None = "NC", start: str = "2024-10-01", end: str = "2024-11-10",
+def run(state: str | None = "NC", start: str = SAMPLE_START, end: str = SAMPLE_END,
         batch_size: int = 20, pause: float = 1.5) -> str | None:
     cent_path = REFERENCE / "county_centroids.csv"
     if not cent_path.exists():
@@ -62,6 +66,13 @@ def run(state: str | None = "NC", start: str = "2024-10-01", end: str = "2024-11
         log.info("Batch %d: %d counties", i // batch_size, len(b))
         time.sleep(pause)
     df = pd.concat(rows, ignore_index=True)
+    expected = pd.MultiIndex.from_product(
+        [cent["county_fips"], pd.date_range(start, end).strftime("%Y-%m-%d")],
+        names=["county_fips", "date"],
+    )
+    observed = pd.MultiIndex.from_frame(df[["county_fips", "date"]])
+    if not observed.is_unique or not expected.sort_values().equals(observed.sort_values()):
+        raise ValueError("Incomplete or duplicated county-day coverage in weather response")
     out = SILVER / f"weather_daily_{tag}.csv"
     df.to_csv(out, index=False)
     log.info("Weather: %d rows (county x day) -> %s", len(df), out)
@@ -71,7 +82,7 @@ def run(state: str | None = "NC", start: str = "2024-10-01", end: str = "2024-11
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("--state", default="NC", help="state code, e.g. NC; 'ALL' = whole US")
-    p.add_argument("--start", default="2024-10-01")
-    p.add_argument("--end", default="2024-11-10")
+    p.add_argument("--start", default=SAMPLE_START)
+    p.add_argument("--end", default=SAMPLE_END)
     a = p.parse_args()
     run(None if a.state == "ALL" else a.state, a.start, a.end)

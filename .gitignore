@@ -35,6 +35,14 @@ htmlcov/
 *.pem
 *.key
 
+# LaTeX build files (if the Overleaf source is kept in the repo)
+*.aux
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+
 # Frontend
 node_modules/
 app/frontend/dist/

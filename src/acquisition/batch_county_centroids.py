@@ -1,5 +1,5 @@
 """County centroids (Census Gazetteer) - used to query weather by coordinates
-and to map airports to counties.
+and to map events with coordinates (e.g. road closures) to counties.
 
 File:   https://www2.census.gov/geo/docs/maps-data/data/gazetteer/<year>_Gazetteer/<year>_Gaz_counties_national.zip
 Output: data/reference/county_centroids.csv (county_fips, state, name, lat, lon, land_sqmi)
