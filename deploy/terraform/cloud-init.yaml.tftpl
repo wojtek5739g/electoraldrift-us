@@ -1,0 +1,33 @@
+#cloud-config
+# Runs once on first boot: installs Docker, clones the repo, starts the stack.
+package_update: true
+packages:
+  - git
+  - ca-certificates
+  - curl
+  - ufw
+
+runcmd:
+  # Docker Engine + Compose plugin (official convenience script)
+  - curl -fsSL https://get.docker.com | sh
+  - usermod -aG docker ubuntu
+  # Host firewall (the only port filter: the VM uses the permissive "default" security group)
+  - ufw default deny incoming
+  - ufw allow from ${admin_cidr} to any port 22 proto tcp
+  - ufw allow 80/tcp
+  - ufw allow 443/tcp
+  - ufw --force enable
+  # App
+  - git clone --branch ${repo_branch} ${repo_url} /opt/electoraldrift
+  # Hostname for the HTTPS certificate: your domain if set, else <ip-with-dashes>.sslip.io
+  - |
+    DOMAIN="${domain}"
+    if [ -z "$DOMAIN" ]; then
+      IP=$(curl -4 -fsS https://ifconfig.me)
+      DOMAIN="$(echo "$IP" | tr . -).sslip.io"
+    fi
+    echo "SITE_ADDRESS=$DOMAIN" > /opt/electoraldrift/.env
+  - chown -R ubuntu:ubuntu /opt/electoraldrift
+  - cd /opt/electoraldrift && docker compose up -d --build
+
+final_message: "ElectoralDrift VM ready after $UPTIME seconds"

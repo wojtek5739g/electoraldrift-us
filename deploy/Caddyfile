@@ -1,0 +1,11 @@
+# Caddy obtains a Let's Encrypt certificate for SITE_ADDRESS automatically,
+# redirects http -> https and proxies everything to the nginx frontend.
+{$SITE_ADDRESS} {
+	encode gzip
+	reverse_proxy frontend:80
+}
+
+# Requests to the bare IP (http://<ip>) are redirected to the HTTPS hostname.
+http:// {
+	redir https://{$SITE_ADDRESS}{uri} permanent
+}
